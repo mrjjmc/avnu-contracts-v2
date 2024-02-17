@@ -15,8 +15,7 @@ trait IJediSwapRouter<TContractState> {
 #[starknet::contract]
 mod JediswapAdapter {
     use avnu::adapters::ISwapAdapter;
-    use avnu::interfaces::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
-    use super::{IJediSwapRouterDispatcher, IJediSwapRouterDispatcherTrait};
+    use avnu::interfaces::erc20::IERC20Dispatcher;
     use starknet::{get_block_timestamp, ContractAddress};
     use array::ArrayTrait;
 
@@ -35,17 +34,20 @@ mod JediswapAdapter {
             to: ContractAddress,
             additional_swap_params: Array<felt252>,
         ) {
+            // Ensure no additional parameters are provided
             assert(additional_swap_params.len() == 0, 'Invalid swap params');
 
-            // Init path
+            // Define the swap path
             let path = array![token_from_address, token_to_address];
 
-            // Init deadline
-            let block_timestamp = get_block_timestamp();
-            let deadline = block_timestamp;
+            // Set the deadline to the current block timestamp
+            let deadline = get_block_timestamp();
 
+            // Approve the exchange to spend tokens
             IERC20Dispatcher { contract_address: token_from_address }
                 .approve(exchange_address, token_from_amount);
+
+            // Initiate the swap
             IJediSwapRouterDispatcher { contract_address: exchange_address }
                 .swap_exact_tokens_for_tokens(
                     token_from_amount, token_to_min_amount, path, to, deadline
